@@ -31,6 +31,7 @@ if __name__ == '__main__':
     plt.grid(True)
     plt.ylim([mlp.errors_tr[-1]-0.5, mlp.errors_tr[-1]+1])
     plt.xlabel("Epochs")
+
     plt.ylabel("MSE")
 
     plt.subplot(2, 1, 2)
