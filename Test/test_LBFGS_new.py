@@ -1,35 +1,43 @@
 import sys
+
 sys.path.append("../")
 from matplotlib import pyplot as plt
 from Trainers.L_BFGS_new import *
 from MLP.Activation_Functions import *
 from MLP.MLP import *
-if __name__ == '__main__':
 
+if __name__ == '__main__':
+    "Variabili necessari"
     n_features = 10
-    n_hidden = 33
     n_out = 2
-    eta = 1
-    alpha = 0.4
-    lambd = 0.0075
-    #lambd = 0
     classification = False
 
+    "Iperparametri ML: configurazione finale"
+    n_hidden = 33
+    eta = 1
+    lambd = 0.0075
+
+    "Caricamento dataset per sperimenti"
     P = loadMatrixFromFile("../Datasets/DatasetTrVl.csv")
     X = P[:, : - 2]
     T = P[:, -2:]
 
-    trainer = LBFGS(eta_start=eta,eta_max=2,max_iter_AWLS_train=100,m1=0.0001,m2=0.9,tau=0.9,
-                    sfgrd=0.0001,mina=1e-16,m=2000)
-    mlp = MLP(n_features, n_hidden, n_out, TanhActivation(), LinearActivation(),lambd=lambd, eta=eta, alfa=alpha,trainer=trainer,classification=classification)
+    "Scelta e Inserimento iperparametri Algoritmo alla rete - Fase di progetto e prove sperimentali"
+    trainer = LBFGS(eta_start=eta, eta_max=2, max_iter_AWLS_train=100, m1=0.0001, m2=0.9, tau=0.9,
+                    sfgrd=0.0001, mina=1e-16, m=2000)
+    mlp = MLP(n_features, n_hidden, n_out, TanhActivation(), LinearActivation(), lambd=lambd, eta=eta,
+              trainer=trainer, classification=classification)
 
-    #train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=1e-6, threshold=0.5, suppress_print=False):
-    mlp.trainer.train(mlp,addBias(X),T,addBias(X),T,n_epochs=10000,eps=1e-5)
+    "traininig Alg."
+    mlp.trainer.train(mlp, addBias(X), T, addBias(X), T, n_epochs=10000, eps=1e-4)
 
-    plt.subplot(2,1,1)
+    """
+    Si effettuano i plot
+    """
+    plt.subplot(2, 1, 1)
     plt.plot(mlp.errors_tr)
     plt.grid(True)
-    plt.ylim([mlp.errors_tr[-1]-0.5, mlp.errors_tr[-1]+1])
+    plt.ylim([mlp.errors_tr[-1] - 0.5, mlp.errors_tr[-1] + 1])
     plt.xlabel("Epochs")
 
     plt.ylabel("MSE")
@@ -41,6 +49,7 @@ if __name__ == '__main__':
     plt.xlabel("Epochs")
     plt.ylabel("MEE")
     plt.show()
+
 """
     #PLOT DELLE LEARNING CURVE...
     plt.plot(mlp.errors_tr)
@@ -74,4 +83,3 @@ if __name__ == '__main__':
     #eta_star = AWLS(mlp,addBias(X),T,e,gradE_h,gradE_o,lambd,eta_start=0.01,eta_max=4,max_iter=100)
     print("Eta_star trovato: ",eta_star)
 """
-
