@@ -9,8 +9,8 @@ if __name__ == '__main__':
     n_features = 10
     n_hidden = 33
     n_out = 2
-    eta = 0.1
-    alpha = 0.7
+    eta = 1
+    alpha = 0.4
     lambd = 0.0075
     #lambd = 0
     classification = False
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     mlp = MLP(n_features, n_hidden, n_out, TanhActivation(), LinearActivation(),lambd=lambd, eta=eta, alfa=alpha,trainer=trainer,classification=classification)
 
     #train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=1e-6, threshold=0.5, suppress_print=False):
-    mlp.trainer.train(mlp,addBias(X),T,addBias(X),T,n_epochs=100000,eps=1e-4,suppress_print=True)
+    mlp.trainer.train(mlp,addBias(X),T,addBias(X),T,n_epochs=10000,eps=1e-4,suppress_print=True)
 
     plt.subplot(2,1,1)
     plt.plot(mlp.errors_tr)

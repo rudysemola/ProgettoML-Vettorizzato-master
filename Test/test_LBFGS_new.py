@@ -20,11 +20,11 @@ if __name__ == '__main__':
     T = P[:, -2:]
 
     trainer = LBFGS(eta_start=eta,eta_max=2,max_iter_AWLS_train=100,m1=0.0001,m2=0.9,tau=0.9,
-                    sfgrd=0.0001,mina=1e-16,m=100)
+                    sfgrd=0.0001,mina=1e-16,m=2000)
     mlp = MLP(n_features, n_hidden, n_out, TanhActivation(), LinearActivation(),lambd=lambd, eta=eta, alfa=alpha,trainer=trainer,classification=classification)
 
     #train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=1e-6, threshold=0.5, suppress_print=False):
-    mlp.trainer.train(mlp,addBias(X),T,addBias(X),T,n_epochs=10000,eps=1e-9)
+    mlp.trainer.train(mlp,addBias(X),T,addBias(X),T,n_epochs=10000,eps=1e-5)
 
     plt.subplot(2,1,1)
     plt.plot(mlp.errors_tr)

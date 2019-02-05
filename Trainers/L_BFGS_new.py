@@ -7,7 +7,6 @@ TODO: FINIRE E CONTROLLARE!!!!!!!!!!
 """
 
 import sys
-
 sys.path.append("../")
 
 from Trainers.Training import *
@@ -18,6 +17,7 @@ from Trainers.LineSearch_new import *
 
 
 class LBFGS(Training):
+
     """
     Inizializza gli iperparametri algoritmici
     :param eta_start: Eta iniziale da provare durante la AWLS
@@ -36,12 +36,12 @@ class LBFGS(Training):
     :param use_delta: Se true, indica che H0 deve essere inizializzato usando il fattore delta.
                         Altrimenti usa formula descritta in Nocedal.
     """
+    def __init__(self,eta_start=1,eta_max=2,max_iter_AWLS_train=100,m1=0.0001,m2=0.9,tau=0.9,
+                 sfgrd = 0.001,mina=1e-16,m=3, delta = 0.8,use_delta=True,
+                 path_results="../RisultatiCM/lbfgs.csv"):
 
-    def __init__(self, eta_start=1, eta_max=2, max_iter_AWLS_train=100, m1=0.0001, m2=0.9, tau=0.9,
-                 sfgrd=0.001, mina=1e-16, m=3, delta=0.8, use_delta=True):
-
-        # PARAMETRI LS
-        self.eta_start = eta_start  # L-BFGS vuole AWLS=> passare alpha=1
+        #PARAMETRI LS
+        self.eta_start = eta_start # L-BFGS vuole AWLS=> passare alpha=1
         self.eta_max = eta_max
         self.max_iter_AWLS_train = max_iter_AWLS_train
         self.m1 = m1
@@ -52,7 +52,7 @@ class LBFGS(Training):
 
         # PARAMETRI BFGS
         self.m = m
-        self.s_y_list = []
+        self.s_y_list= []
         self.H0 = None
         self.delta = delta
         self.use_delta = use_delta
@@ -69,10 +69,10 @@ class LBFGS(Training):
         self.norm_gradE_0 = 0
         self.epsilon_prime = None
 
-        self.n_iters_AWLS_train = 0
+        self. n_iters_AWLS_train = 0
 
-        # Per sapere quante volte usa il delta il calcolo di H0!
-        self.num_delta = 0
+        self.path_results = path_results
+
     """
     Esegue la prima iterazione del L-BFGS per inizializzare i vari elementi in modo corretto
     Nell'ordine, le azioni eseguite sono:
@@ -103,16 +103,15 @@ class LBFGS(Training):
     
     :return converged : se true, indica che si è raggiunto un minimo
     """
+    def do_first_iteration(self,mlp,X,T,X_vl,T_vl,eps,threshold):
 
-    def do_first_iteration(self, mlp, X, T, X_vl, T_vl, eps, threshold):
-
-        # Calcolo la funzione nel punto iniziale
+        #Calcolo la funzione nel punto iniziale
         self.w_prec = get_current_point(mlp)
 
         """
         Calcolo funzione e gradiente nel punto iniziale
         """
-        E, gradE = evaluate_function(mlp, X, T, self.w_prec)
+        E, gradE = evaluate_function(mlp,X,T, self.w_prec)
         mlp.errors_tr.append(E)
 
         self.gradE_prec = gradE
@@ -127,7 +126,7 @@ class LBFGS(Training):
         """
         Calcolo la direzione iniziale d_0 = - H0*gradE_0
         """
-        d = - np.dot(self.H0, self.gradE_prec)
+        d = - np.dot(self.H0,self.gradE_prec)
 
         assert d.shape[1] == 1
         assert d.shape[0] == self.gradE_prec.shape[0]
@@ -138,12 +137,13 @@ class LBFGS(Training):
         mlp.eta, it_AWLS = AWLS(mlp, X, T, d, mlp.lambd, self.eta_start, self.eta_max,
                                 self.max_iter_AWLS_train,
                                 self.m1, self.m2,
-                                self.tau, self.mina, self.sfgrd, l_bfgs=True, debug=True)
-        print("eta= ", mlp.eta)
-        print("it= ", it_AWLS)
+                                self.tau, self.mina, self.sfgrd, l_bfgs=True,debug=True)
+        print("eta= ",mlp.eta)
+        print("it= ",it_AWLS)
 
         self.it_AWLS_list.append(it_AWLS)
         self.n_iters_AWLS_train += it_AWLS
+
 
         """
         Aggiorna i pesi
@@ -151,7 +151,7 @@ class LBFGS(Training):
 
         self.w_new = self.w_prec + mlp.eta * d
 
-        update_weights(mlp, self.w_new)
+        update_weights(mlp,self.w_new)
 
         """
         Calcolo la funzione nel nuovo punto
@@ -160,14 +160,19 @@ class LBFGS(Training):
         E_new, gradE_new = evaluate_function(mlp, X, T, self.w_new)
         mlp.errors_tr.append(E_new)
 
-        mee = compute_Regr_MEE(T, mlp.Out_o)
+        mee = compute_Regr_MEE(T,mlp.Out_o)
         mlp.errors_mee_tr.append(mee)
         self.gradE_new = gradE_new
 
         self.norm_gradE = np.linalg.norm(self.gradE_new)
 
+        with open(self.path_results,"w") as f:
+            f.write("#Iterazione,Iterazioni spese in Line Search,Eta,Errore,Gradiente\n")
+            f.write("0,0,-,%s,1\n"%(E))
+            f.write("1,%s,%s,%s,%s\n"%(it_AWLS,mlp.eta,E_new,self.norm_gradE/self.norm_gradE_0))
+
         print("First Error ", E)
-        print("New Error ", E_new)
+        print("New Error ",E_new)
         print("New gradient ", self.norm_gradE / self.norm_gradE_0)
         converged = self.norm_gradE < self.epsilon_prime
 
@@ -177,37 +182,34 @@ class LBFGS(Training):
         s = self.w_new - self.w_prec
         y = self.gradE_new - self.gradE_prec
 
-        self.s_y_list.append((s, y))
+
+        self.s_y_list.append((s,y))
         return converged
 
     """
     Calcola H0 con la formula descritta da Nocedal
     """
-
     def compute_H0(self):
 
-        # Prendo s,y più recenti
+        #Prendo s,y più recenti
         s = self.s_y_list[-1][0]
         y = self.s_y_list[-1][1]
 
-        den = np.dot(y.T, y)
+        den = np.dot(y.T,y)
 
-        """"
-        # Pongo un limite inferiore al valore del denominatore
-        if den < 1e-16:
-            print("H0 con delta!")
-            #self.num_delta += 1
-            self.H0 = self.delta * np.eye(self.H0.shape[0])
-        """
+        #Pongo un limite inferiore al valore del denominatore
+        if den < 1e-10:
+            den = 1e-10
 
-        # print(float(np.dot(s.T,y)))
-        num = np.dot(s.T, y)
+        #print(float(np.dot(s.T,y)))
+        num = np.dot(s.T,y)
         assert num > 0, "Curvature condition non è verificata!!!"
         gamma = float(num / den)
 
         self.H0 = gamma * np.eye(self.H0.shape[0])
-        # print("gamma= ",gamma)
+        #print("gamma= ",gamma)
         return
+
 
     def find_direction(self):
 
@@ -217,40 +219,41 @@ class LBFGS(Training):
 
         for sy in reversed(self.s_y_list):
 
-            s_i = sy[0]
+            s_i= sy[0]
             y_i = sy[1]
-            den = np.dot(y_i.T, s_i)
+            den = np.dot(y_i.T,s_i)
             assert den > 0, "Curvature condition non è verificata!!!"
-            if den < 1e-16:
-                print("=(")
-                den = 1e-16
+            if den < 1e-10:
+                den = 1e-10
 
             rho_i = 1 / den
             rho_bfgs_list.append(rho_i)
 
-            alpha_i = rho_i * np.dot(s_i.T, q)
+            alpha_i = rho_i *np.dot(s_i.T,q)
             alpha_bfgs_list.append(alpha_i)
 
-            q = q - alpha_i * y_i
+            q = q - alpha_i*y_i
 
-        r = np.dot(self.H0, q)
+        r = np.dot(self.H0,q)
 
         alpha_bfgs_list.reverse()
         rho_bfgs_list.reverse()
 
-        for (i, sy) in enumerate(self.s_y_list):
+        for (i,sy) in enumerate(self.s_y_list):
+
             s_i = sy[0]
             y_i = sy[1]
 
             rho_i = rho_bfgs_list[i]
             alpha_i = alpha_bfgs_list[i]
 
-            beta = rho_i * np.dot(y_i.T, r)
-            r = r + s_i * (alpha_i - beta)
+            beta = rho_i * np.dot(y_i.T,r)
+            r = r + s_i *(alpha_i - beta)
 
         return r
 
-    def train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=10 ^ (-3), threshold=0.5, suppress_print=False):
+
+    def train(self,mlp,X, T, X_val, T_val, n_epochs = 1000, eps = 10 ^ (-3), threshold = 0.5, suppress_print = False):
 
         assert n_epochs > 0
         assert eps > 0
@@ -261,20 +264,19 @@ class LBFGS(Training):
 
         done_max_epochs = False  # Fatte numero massimo iterazioni
         found_optimum = False  # Gradiente minore o uguale a eps_prime
-        numerical_problems = False  # rho oppure gamma problem
-        done_max_AWLS_iters_train = False  # terminato il numero massimo di iterazioni complessive di AWLS
+        numerical_problems = False # rho oppure gamma problem
+        done_max_AWLS_iters_train = False #terminato il numero massimo di iterazioni complessive di AWLS
 
-        while (not done_max_epochs) and (not done_max_AWLS_iters_train) and (not found_optimum) and (
-        not numerical_problems):
+        while (not done_max_epochs) and (not done_max_AWLS_iters_train)and (not found_optimum) and (not numerical_problems):
 
             if epoch == 0:
 
-                converged = self.do_first_iteration(mlp, X, T, X_val, T_val, eps, threshold)
+                converged = self.do_first_iteration(mlp,X,T,X_val,T_val,eps,threshold)
                 if converged:
                     found_optimum = True
 
                 else:
-                    epoch += 1
+                    epoch +=1
                     if epoch >= n_epochs:
                         done_max_epochs = True
 
@@ -296,28 +298,32 @@ class LBFGS(Training):
                 self.it_AWLS_list.append(it_AWLS)
                 self.n_iters_AWLS_train += it_AWLS
 
+
                 """
                 Aggiorno i pesi
                 """
 
                 w_new = self.w_new + mlp.eta * d
 
-                update_weights(mlp, w_new)
+                update_weights(mlp,w_new)
 
                 self.w_prec = self.w_new
                 self.w_new = w_new
+
 
                 """
                 Calcolo funzione e gradiente nel nuovo punto
                 """
 
-                E, gradE = evaluate_function(mlp, X, T, self.w_new)
+                E,gradE = evaluate_function(mlp,X,T,self.w_new)
                 mlp.errors_tr.append(E)
-                mee = compute_Regr_MEE(T, mlp.Out_o)
+                mee = compute_Regr_MEE(T,mlp.Out_o)
                 mlp.errors_mee_tr.append(mee)
                 self.norm_gradE = np.linalg.norm(gradE)
-                print("Iterazione %s) Eta = %s New Error %s New Gradient %s" % (
-                    epoch, mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
+                print("Iterazione %s) Eta = %s New Error %s New Gradient %s"%(
+                    epoch+1,mlp.eta,E,self.norm_gradE/self.norm_gradE_0))
+                with open(self.path_results, "a") as f:
+                    f.write("%s,%s,%s,%s,%s\n" % (epoch+1,it_AWLS,mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
                 self.gradE_prec = self.gradE_new
                 self.gradE_new = gradE
 
@@ -328,7 +334,7 @@ class LBFGS(Training):
                 s = self.w_new - self.w_prec
                 y = self.gradE_new - self.gradE_prec
 
-                self.s_y_list.append((s, y))
+                self.s_y_list.append((s,y))
                 if len(self.s_y_list) > self.m:
                     self.s_y_list.pop(0)
 
@@ -342,6 +348,7 @@ class LBFGS(Training):
                 if self.norm_gradE < self.epsilon_prime:
                     found_optimum = True
 
+
         if found_optimum:
             print("Trovato ottimo")
 
@@ -352,6 +359,5 @@ class LBFGS(Training):
         elif done_max_AWLS_iters_train:
             print("Terminato per numero massimo di iterazioni totali di AWLS..")
 
-        # print("num_delta= ", self.num_delta)
 
         return len(mlp.errors_tr)
