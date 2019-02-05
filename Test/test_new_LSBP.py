@@ -35,6 +35,7 @@ if __name__ == '__main__':
     """
     Si effettuano i plot
     """
+    # Dettaglio
     plt.subplot(2, 1, 1)
     plt.plot(mlp.errors_tr)
     plt.grid(True)
@@ -49,6 +50,23 @@ if __name__ == '__main__':
     plt.xlabel("Epochs")
     plt.ylabel("MEE")
     plt.show()
+
+    # Generale
+    plt.subplot(2, 1, 1)
+    plt.plot(mlp.errors_tr)
+    plt.grid(True)
+    # plt.ylim([mlp.errors_tr[-1] - 0.5, mlp.errors_tr[-1] + 1])
+    plt.xlabel("Epochs")
+    plt.ylabel("MSE")
+
+    plt.subplot(2, 1, 2)
+    plt.plot(mlp.errors_mee_tr)
+    plt.grid(True)
+    # plt.ylim([mlp.errors_mee_tr[-1] - 0.5, mlp.errors_mee_tr[-1] + 1])
+    plt.xlabel("Epochs")
+    plt.ylabel("MEE")
+    plt.show()
+
 """
     #PLOT DELLE LEARNING CURVE...
     plt.plot(mlp.errors_tr)

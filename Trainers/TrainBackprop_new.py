@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../")
 
 from Trainers.Training import *
@@ -7,9 +8,11 @@ from Utilities.UtilityCM2 import *
 """"
 Effettua lo standard SGD con momentum usando stepsize fissato.
 """
+
+
 class TrainBackprop2(Training):
 
-    def __init__(self,path_results = "../RisultatiCM/bp.csv"):
+    def __init__(self, path_results="../RisultatiCM/bp.csv"):
         self.w_prec = None
         self.w_new = None
 
@@ -20,10 +23,8 @@ class TrainBackprop2(Training):
         self.norm_gradE = 0
         self.norm_gradE_0 = 0
 
-
-    def train(self,mlp,X, T, X_val, T_val, n_epochs = 1000, eps = 10 ^ (-3), threshold = 0.5, suppress_print = False):
+    def train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=10 ^ (-3), threshold=0.5, suppress_print=False):
         assert X.shape[0] == T.shape[0]
-
 
         epoch = 0
         done_max_epochs = False  # Fatte numero massimo iterazioni
@@ -152,14 +153,14 @@ class TrainBackprop2(Training):
         if suppress_print:
             if mlp.classification:
                 print(
-                        "Final Results: ||gradE||/ ||gradE_0|| = %s\nTR Error(MSE) : %s VL Error(MSE) : %s TR Accuracy((N-num_err)/N) : %s VL Accuracy((N-num_err)/N) : %s" % (
-                            self.norm_gradE / self.norm_gradE_0, mlp.errors_tr[-1], mlp.errors_vl[-1],
-                            mlp.accuracies_tr[-1], mlp.accuracies_vl[-1]))
+                    "Final Results: ||gradE||/ ||gradE_0|| = %s\nTR Error(MSE) : %s VL Error(MSE) : %s TR Accuracy((N-num_err)/N) : %s VL Accuracy((N-num_err)/N) : %s" % (
+                        self.norm_gradE / self.norm_gradE_0, mlp.errors_tr[-1], mlp.errors_vl[-1],
+                        mlp.accuracies_tr[-1], mlp.accuracies_vl[-1]))
             else:
                 print(
-                        "Final Results:||gradE||/ ||gradE_0|| = %s\nTR Error(MSE) : %s VL Error(MSE) : %s TR (MEE) : %s VL (MEE) : %s" % (
-                            self.norm_gradE / self.norm_gradE_0, mlp.errors_tr[-1], mlp.errors_vl[-1],
-                            mlp.errors_mee_tr[-1], mlp.errors_mee_vl[-1]))
+                    "Final Results:||gradE||/ ||gradE_0|| = %s\nTR Error(MSE) : %s VL Error(MSE) : %s TR (MEE) : %s VL (MEE) : %s" % (
+                        self.norm_gradE / self.norm_gradE_0, mlp.errors_tr[-1], mlp.errors_vl[-1],
+                        mlp.errors_mee_tr[-1], mlp.errors_mee_vl[-1]))
 
         if found_optimum:
             print("Trovato ottimo")

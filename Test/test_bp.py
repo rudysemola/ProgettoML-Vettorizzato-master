@@ -1,41 +1,40 @@
 import sys
 
 sys.path.append("../")
-
 from matplotlib import pyplot as plt
 from Trainers.TrainBackprop_new import *
 from MLP.Activation_Functions import *
 from MLP.MLP import *
 
 if __name__ == '__main__':
+    "Variabili necessari"
     n_features = 10
-    n_hidden = 33
     n_out = 2
-
-    eta = 0.025
-    alpha = 0.9
-
-    lambd = 0.0075
-
-    #lambd = 0
-
     classification = False
 
+    "Iperparametri ML: configurazione finale"
+    n_hidden = 33
+    eta = 0.025  # Loss diverso! ci vuole eta piu basso
+    alpha = 0.9
+    lambd = 0.0075
+
+    "Caricamento dataset per sperimenti"
     P = loadMatrixFromFile("../Datasets/DatasetTrVl.csv")
     X = P[:, : - 2]
     T = P[:, -2:]
 
-    title = "../RisultatiCM/bp_"
-    title = title + "eta_"+str(eta) + "_alpha_" + str(alpha)+".csv"
-
-    trainer = TrainBackprop2(title)
-
+    "Scelta e Inserimento iperparametri Algoritmo alla rete - Fase di progetto e prove sperimentali"
+    trainer = TrainBackprop2()
     mlp = MLP(n_features, n_hidden, n_out, TanhActivation(), LinearActivation(), lambd=lambd, eta=eta, alfa=alpha,
               trainer=trainer, classification=classification)
 
-    # train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=1e-6, threshold=0.5, suppress_print=False):
+    "traininig Alg."
     mlp.trainer.train(mlp, addBias(X), T, addBias(X), T, n_epochs=10000, eps=1e-4, suppress_print=True)
 
+    """
+    Si effettuano i plot
+    """
+    # Dettaglio
     plt.subplot(2, 1, 1)
     plt.plot(mlp.errors_tr)
     plt.grid(True)
@@ -51,19 +50,13 @@ if __name__ == '__main__':
     plt.ylabel("MEE")
     plt.show()
 
+    # Generale
     plt.subplot(2, 1, 1)
     plt.plot(mlp.errors_tr)
     plt.grid(True)
-    #plt.ylim([mlp.errors_tr[-1] - 0.5, mlp.errors_tr[-1] + 1])
+    # plt.ylim([mlp.errors_tr[-1] - 0.5, mlp.errors_tr[-1] + 1])
     plt.xlabel("Epochs")
     plt.ylabel("MSE")
-
-    plt.subplot(2, 1, 2)
-    plt.plot(mlp.errors_mee_tr)
-    plt.grid(True)
-    #plt.ylim([mlp.errors_mee_tr[-1] - 0.5, mlp.errors_mee_tr[-1] + 1])
-    plt.xlabel("Epochs")
-    plt.ylabel("MEE")
     plt.show()
 
 """
