@@ -39,6 +39,7 @@ class TrainBackPropLS(Training):
         self.tau = tau
         self.sfgrd = sfgrd
         self.mina = mina
+
         self.it_AWLS_list = []
         self.w_prec = None
         self.w_new = None

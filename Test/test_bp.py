@@ -9,18 +9,26 @@ from MLP.MLP import *
 from Validation.GridSearch import *
 
 if __name__ == '__main__':
-    "Variabili necessari"
+    "Variabili necessarie"
     n_features = 10
     classification = False
     n_out = 2
 
     "Iperparametri ML: configurazione finale"
     eta = 0.025
-    alpha = 0.9
+    alpha = 0.8
     n_hidden = 33
     lambd = 0.0075
     weight = 0.7
     n_trials = 5
+
+    "Iperparametri CM"
+    n_epochs = 10000
+    eps = 1e-4
+
+    "Criteri di arresto impiegati"
+    done_max_epochs = False  # Fatte numero massimo iterazioni
+    found_optimum = False  # Gradiente minore o uguale a eps_prime
 
     "Caricamento dataset per sperimenti"
     P = loadMatrixFromFile("../Datasets/DatasetTrVl.csv")
@@ -36,10 +44,10 @@ if __name__ == '__main__':
 
     "traininig Alg. su numero di volte pari a n_trial"
     best_mlp, mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, std_error_MEE_vl,\
-    avg_epochs_done = run_trials(n_features, X, T, X, T, n_epochs=1000,
+    avg_epochs_done = run_trials(n_features, X, T, X, T, n_epochs=n_epochs,
                                  hidden_act=TanhActivation(), output_act=LinearActivation(),
                                  eta=eta, alfa=alpha, n_hidden=n_hidden, weight=0.7, lambd=lambd, n_trials=n_trials,
-                                 classification=classification, trainer=trainer, eps=1e-4)
+                                 classification=classification, trainer=trainer, eps=eps)
 
     # Dettaglio
     plt.subplot(2, 1, 1)

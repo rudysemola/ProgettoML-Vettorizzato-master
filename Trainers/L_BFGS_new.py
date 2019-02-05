@@ -264,8 +264,8 @@ class LBFGS(Training):
 
         done_max_epochs = False  # Fatte numero massimo iterazioni
         found_optimum = False  # Gradiente minore o uguale a eps_prime
-        numerical_problems = False # rho oppure gamma problem
-        done_max_AWLS_iters_train = False #terminato il numero massimo di iterazioni complessive di AWLS
+        numerical_problems = False  # rho oppure gamma problem
+        done_max_AWLS_iters_train = False  # terminato il numero massimo di iterazioni complessive di AWLS
 
         while (not done_max_epochs) and (not done_max_AWLS_iters_train)and (not found_optimum) and (not numerical_problems):
 

@@ -13,10 +13,31 @@ if __name__ == '__main__':
     classification = False
 
     "Iperparametri ML: configurazione finale"
-    n_hidden = 33
     eta = 1
-    alpha = 0.9
+    alpha = 0.8
     lambd = 0.0075
+    n_hidden = 33
+
+    "Iperparametri CM A1"  # per ora valori di default
+    eta_start = 0.1
+    eta_max = 2
+    max_iter = 100
+    m1 = 0.0001
+    m2 = 0.9
+    tau = 0.9
+    sfgrd = 0.001
+    mina = 1e-16
+    n_epochs = 10000
+    eps = 1e-4
+
+    "Criteri di arresto impiegati dall'algoritmo"
+    done_max_epochs = False  # Fatte numero massimo iterazioni
+    found_optimum = False  # Gradiente minore o uguale a eps_prime
+
+    "Criteri di arresto impiegati su AWLS"
+    done_max_iters = False   # Fatte numero massimo iterazioni (AWLS!)
+    reached_eta_max = False  # raggiunto eta massimo
+    wolfe_satisfied = False  # AW sodisfatta
 
     "Caricamento dataset per sperimenti"
     P = loadMatrixFromFile("../Datasets/DatasetTrVl.csv")

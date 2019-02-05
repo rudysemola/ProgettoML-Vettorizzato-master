@@ -17,6 +17,28 @@ if __name__ == '__main__':
     eta = 1
     lambd = 0.0075
 
+    "Iperparametri CM"
+    # PARAMETRI LS
+    eta_start = 0.1
+    eta_max = 2
+    max_iter = 100
+    m1 = 0.0001
+    m2 = 0.9
+    tau = 0.9
+    sfgrd = 0.001
+    mina = 1e-16
+    # PARAMETRI BFGS
+    m = 3
+    delta = 0.8
+    # Classici
+    n_epochs = 10000
+    eps = 1e-4
+
+    "Criteri di arresto impiegati"
+    done_max_epochs = False  # Fatte numero massimo iterazioni
+    found_optimum = False  # Gradiente minore o uguale a eps_prime
+    done_max_AWLS_iters_train = False  # terminato il numero massimo di iterazioni complessive di AWLS
+
     "Caricamento dataset per sperimenti"
     P = loadMatrixFromFile("../Datasets/DatasetTrVl.csv")
     X = P[:, : - 2]
