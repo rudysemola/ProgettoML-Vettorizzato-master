@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append("../")
+
 from matplotlib import pyplot as plt
 from Trainers.TrainBackprop_new import *
 from MLP.Activation_Functions import *
@@ -10,17 +11,25 @@ if __name__ == '__main__':
     n_features = 10
     n_hidden = 33
     n_out = 2
-    eta = 0.01
-    alpha = 0.5
+
+    eta = 0.025
+    alpha = 0.9
+
     lambd = 0.0075
-    # lambd = 0
+
+    #lambd = 0
+
     classification = False
 
     P = loadMatrixFromFile("../Datasets/DatasetTrVl.csv")
     X = P[:, : - 2]
     T = P[:, -2:]
 
-    trainer = TrainBackprop2()
+    title = "../RisultatiCM/bp_"
+    title = title + "eta_"+str(eta) + "_alpha_" + str(alpha)+".csv"
+
+    trainer = TrainBackprop2(title)
+
     mlp = MLP(n_features, n_hidden, n_out, TanhActivation(), LinearActivation(), lambd=lambd, eta=eta, alfa=alpha,
               trainer=trainer, classification=classification)
 
@@ -38,6 +47,21 @@ if __name__ == '__main__':
     plt.plot(mlp.errors_mee_tr)
     plt.grid(True)
     plt.ylim([mlp.errors_mee_tr[-1] - 0.5, mlp.errors_mee_tr[-1] + 1])
+    plt.xlabel("Epochs")
+    plt.ylabel("MEE")
+    plt.show()
+
+    plt.subplot(2, 1, 1)
+    plt.plot(mlp.errors_tr)
+    plt.grid(True)
+    #plt.ylim([mlp.errors_tr[-1] - 0.5, mlp.errors_tr[-1] + 1])
+    plt.xlabel("Epochs")
+    plt.ylabel("MSE")
+
+    plt.subplot(2, 1, 2)
+    plt.plot(mlp.errors_mee_tr)
+    plt.grid(True)
+    #plt.ylim([mlp.errors_mee_tr[-1] - 0.5, mlp.errors_mee_tr[-1] + 1])
     plt.xlabel("Epochs")
     plt.ylabel("MEE")
     plt.show()

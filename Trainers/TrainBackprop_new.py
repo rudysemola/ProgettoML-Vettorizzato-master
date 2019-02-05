@@ -88,7 +88,7 @@ class TrainBackprop2(Training):
                 found_optimum = True
 
             if not found_optimum:
-                # LINE_SEARCH
+
                 d = - self.gradE
 
                 # AGGIORNAMENTO
@@ -123,7 +123,7 @@ class TrainBackprop2(Training):
                 if epoch >= n_epochs:
                     done_max_epochs = True
 
-        # CALCOLO ERRORE DOPO L'ULTIMO AGGIORNAMENTO
+        #CALCOLO ERRORE DOPO L'ULTIMO AGGIORNAMENTO
 
         E, _ = evaluate_function(mlp, X, T, self.w_new)
 
