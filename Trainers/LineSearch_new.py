@@ -77,6 +77,7 @@ Effettua Armijo Wolfe Line Search"
 
 def AWLS(mlp, X, T, d, lambd, eta_start=1, eta_max=20, max_iter=100, m1=0.001, m2=0.9,
          tau=0.9, mina=1e-16, sfgrd=0.001, debug=False, l_bfgs=False, epsilon=1e-7):
+
     assert eta_start > 0
     assert eta_max > eta_start
     assert lambd >= 0

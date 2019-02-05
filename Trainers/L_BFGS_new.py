@@ -69,7 +69,7 @@ class LBFGS(Training):
         self.norm_gradE_0 = 0
         self.epsilon_prime = None
 
-        self. n_iters_AWLS_train = 0
+        self.n_iters_AWLS_train = 0
 
         self.path_results = path_results
 
@@ -113,10 +113,22 @@ class LBFGS(Training):
         """
         E, gradE = evaluate_function(mlp,X,T, self.w_prec)
         mlp.errors_tr.append(E)
+        mee_tr = compute_Regr_MEE(T, mlp.Out_o)
+        mlp.errors_mee_tr.append(mee_tr)
 
         self.gradE_prec = gradE
         self.norm_gradE_0 = np.linalg.norm(self.gradE_prec)
         self.epsilon_prime = eps * self.norm_gradE_0
+
+        """
+        Calcolo errore validazione nel punto iniziale
+        """
+        E_new_vl, gradE_new_vl = evaluate_function(mlp, X_vl, T_vl, self.w_prec)
+        mlp.errors_vl.append(E_new_vl)
+
+        mee_vl = compute_Regr_MEE(T_vl, mlp.Out_o)
+        mlp.errors_mee_vl.append(mee_vl)
+
 
         """
         Inizializzo H0 come delta*I
@@ -162,9 +174,21 @@ class LBFGS(Training):
 
         mee = compute_Regr_MEE(T,mlp.Out_o)
         mlp.errors_mee_tr.append(mee)
+
         self.gradE_new = gradE_new
 
         self.norm_gradE = np.linalg.norm(self.gradE_new)
+
+
+        """
+        Calcolo errore validazione nel nuovo punto
+        """
+        E_new_vl, gradE_new_vl = evaluate_function(mlp, X_vl, T_vl, self.w_new)
+        mlp.errors_vl.append(E_new_vl)
+
+        mee_vl = compute_Regr_MEE(T_vl, mlp.Out_o)
+        mlp.errors_mee_vl.append(mee_vl)
+
 
         with open(self.path_results,"w") as f:
             f.write("#Iterazione,Iterazioni spese in Line Search,Eta,Errore,Gradiente\n")
@@ -319,11 +343,23 @@ class LBFGS(Training):
                 mlp.errors_tr.append(E)
                 mee = compute_Regr_MEE(T,mlp.Out_o)
                 mlp.errors_mee_tr.append(mee)
+
                 self.norm_gradE = np.linalg.norm(gradE)
                 print("Iterazione %s) Eta = %s New Error %s New Gradient %s"%(
                     epoch+1,mlp.eta,E,self.norm_gradE/self.norm_gradE_0))
                 with open(self.path_results, "a") as f:
                     f.write("%s,%s,%s,%s,%s\n" % (epoch+1,it_AWLS,mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
+
+
+                """
+                Calcolo VL Error
+                """
+                E_val, gradE = evaluate_function(mlp, X_val, T_val, self.w_new)
+                mlp.errors_vl.append(E_val)
+                mee_val = compute_Regr_MEE(T_val, mlp.Out_o)
+                mlp.errors_mee_vl.append(mee_val)
+
+
                 self.gradE_prec = self.gradE_new
                 self.gradE_new = gradE
 
@@ -355,9 +391,7 @@ class LBFGS(Training):
         elif done_max_epochs:
             print("Fatto il numero massimo di epoche")
 
-
         elif done_max_AWLS_iters_train:
             print("Terminato per numero massimo di iterazioni totali di AWLS..")
-
 
         return len(mlp.errors_tr)

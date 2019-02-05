@@ -7,6 +7,7 @@ from Trainers.TrainBackprop_new import *
 from MLP.Activation_Functions import *
 from MLP.MLP import *
 from Validation.GridSearch import *
+import time
 
 if __name__ == '__main__':
     "Variabili necessarie"
@@ -37,7 +38,7 @@ if __name__ == '__main__':
 
     "Per stampe salvandole su file"
     title = "../RisultatiCM/bp_"
-    title = title + "eta_" + str(eta) + "_alpha_" + str(alpha) + ".csv"
+    title = title + time.strftime("%d-%m-%Y-%H%M%S") + ".csv"
 
     "Scelta e Inserimento iperparametri Algoritmo alla rete - Fase di progetto e prove sperimentali"
     trainer = TrainBackprop2(title)

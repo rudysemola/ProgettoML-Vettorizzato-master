@@ -31,6 +31,7 @@ class TrainBackPropLS(Training):
 
     def __init__(self, eta_start=0.1, eta_max=2, max_iter=100, m1=0.0001, m2=0.9, tau=0.9,
                  sfgrd=0.001, mina=1e-16, path_results="../RisultatiCM/lsbp.csv"):
+
         self.eta_start = eta_start
         self.eta_max = eta_max
         self.max_iter = max_iter
@@ -39,6 +40,8 @@ class TrainBackPropLS(Training):
         self.tau = tau
         self.sfgrd = sfgrd
         self.mina = mina
+        self.epsilon_prime = 0
+
 
         self.it_AWLS_list = []
         self.w_prec = None
@@ -46,7 +49,7 @@ class TrainBackPropLS(Training):
 
         self.gradE = 0
         self.gradE_0 = 0
-        self.epsilon_prime = 0
+
         self.path_results = path_results
 
     def train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=1e-12, threshold=0.5, suppress_print=False):

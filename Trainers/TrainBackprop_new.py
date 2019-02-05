@@ -136,7 +136,6 @@ class TrainBackprop2(Training):
             error_MEE = compute_Regr_MEE(T, mlp.Out_o)
             mlp.errors_tr.append(E)
             mlp.errors_mee_tr.append(error_MEE)
-
             error_MSE_val, _ = evaluate_function(mlp, X_val, T_val, self.w_new)
 
             if mlp.classification:
