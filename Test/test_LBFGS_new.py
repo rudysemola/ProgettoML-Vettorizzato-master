@@ -9,6 +9,7 @@ from Validation.GridSearch import *
 import time
 
 if __name__ == '__main__':
+
     "Variabili necessari"
     n_features = 10
     n_out = 2
@@ -19,24 +20,7 @@ if __name__ == '__main__':
     eta = 1
     alpha = 1
     lambd = 0.0075
-    n_trials = 5
-
-    "Iperparametri CM"
-    # PARAMETRI LS
-    eta_start = 0.1
-    eta_max = 2
-    max_iter = 100
-    m1 = 0.0001
-    m2 = 0.9
-    tau = 0.9
-    sfgrd = 0.001
-    mina = 1e-16
-    # PARAMETRI BFGS
-    m = 3
-    delta = 0.8
-    # Classici
-    n_epochs = 10000
-    eps = 1e-4
+    n_trials = 3
 
     "Criteri di arresto impiegati"
     done_max_epochs = False  # Fatte numero massimo iterazioni
@@ -45,7 +29,7 @@ if __name__ == '__main__':
 
     "Iperparametri CM"
     # PARAMETRI LS
-    eta_start = 0.1
+    eta_start = 1
     eta_max = 2
     max_iter = 100
     m1 = 0.0001
@@ -57,7 +41,7 @@ if __name__ == '__main__':
     m = 3
     delta = 0.8
     # Classici
-    n_epochs = 10000
+    n_epochs = 1000
     eps = 1e-4
 
     "Criteri di arresto impiegati"
@@ -71,19 +55,21 @@ if __name__ == '__main__':
     T = P[:, -2:]
 
     "Per stampe salvandole su file"
-    title = "../RisultatiCM/l-bfgs_"
+    title = "../RisultatiCM/lbfgs_"
     title = title + time.strftime("%d-%m-%Y-%H%M%S") + ".csv"
 
-    "Scelta e Inserimento iperparametri Algoritmo alla rete - Fase di progetto e prove sperimentali"
-    trainer = LBFGS(eta_start=eta, eta_max=2, max_iter_AWLS_train=100, m1=0.0001, m2=0.9, tau=0.9,
-                    sfgrd=0.0001, mina=1e-16, m=2000,path_results=title)
-    "traininig Alg. su numero di volte pari a n_trial"
-    best_mlp, mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, std_error_MEE_vl, \
-    avg_epochs_done = run_trials(n_features, X, T, X, T, n_epochs=n_epochs,
-                                 hidden_act=TanhActivation(), output_act=LinearActivation(),
-                                 eta=eta, alfa=alpha, n_hidden=n_hidden, weight=0.7, lambd=lambd, n_trials=n_trials,
-                                 classification=classification, trainer=trainer, eps=eps)
+    title_stat = "../RisultatiCM/lbfgs_stat_"
+    title_stat = title_stat + time.strftime("%d-%m-%Y-%H%M%S") + ".csv"
 
+    "Scelta e Inserimento iperparametri Algoritmo alla rete - Fase di progetto e prove sperimentali"
+    trainer = LBFGS(eta_start=eta_start, eta_max=eta_max, max_iter_AWLS_train=max_iter, m1=m1, m2=m2, tau=tau,
+                    sfgrd=sfgrd, mina=mina, m=m,path_results=title)
+
+    mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, \
+    std_error_MEE_vl= perform_test(n_features, X, T, X, T, n_epochs=n_epochs,
+               hidden_act=TanhActivation(), output_act=LinearActivation(),
+               eta=eta, alfa=alpha, n_hidden=n_hidden, weight=0.7, lambd=lambd, n_trials=n_trials,
+               classification=classification, trainer=trainer, eps=eps,path_results=title_stat)
     # Dettaglio
     plt.subplot(2, 1, 1)
     plt.plot(mean_err_tr)
@@ -115,6 +101,7 @@ if __name__ == '__main__':
     plt.xlabel("Epochs")
     plt.ylabel("MEE")
     plt.show()
+
 
 """
     #PLOT DELLE LEARNING CURVE...

@@ -19,13 +19,13 @@ if __name__ == '__main__':
     alpha = 0.8
     lambd = 0.0075
     n_hidden = 33
-    n_trials = 5
+    n_trials = 3
 
     "Iperparametri CM A1"  # per ora valori di default
-    eta_start = 0.1
+    eta_start = 0.05
     eta_max = 2
     max_iter = 100
-    m1 = 0.0001
+    m1 = 0.001
     m2 = 0.9
     tau = 0.9
     sfgrd = 0.001
@@ -51,18 +51,28 @@ if __name__ == '__main__':
     title = "../RisultatiCM/bpls_"
     title = title + time.strftime("%d-%m-%Y-%H%M%S") + ".csv"
 
+    title_stat = "../RisultatiCM/bpls_stat_"
+    title_stat = title_stat + time.strftime("%d-%m-%Y-%H%M%S") + ".csv"
+
     "Scelta e Inserimento iperparametri Algoritmo alla rete - Fase di progetto e prove sperimentali"
     trainer = TrainBackPropLS(
     eta_start=eta_start, eta_max=eta_max, max_iter=max_iter, m1=m1, m2=m2, tau=tau,
     sfgrd=sfgrd, mina=mina, path_results=title)
 
     "traininig Alg. su numero di volte pari a n_trial"
+    """
     best_mlp, mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, std_error_MEE_vl,\
     avg_epochs_done = run_trials(n_features, X, T, X, T, n_epochs=n_epochs,
                                  hidden_act=TanhActivation(), output_act=LinearActivation(),
                                  eta=eta, alfa=alpha, n_hidden=n_hidden, weight=0.7, lambd=lambd, n_trials=n_trials,
-                                 classification=classification, trainer=trainer, eps=eps)
+                              classification=classification, trainer=trainer, eps=eps)
+    """
 
+    mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, \
+    std_error_MEE_vl=perform_test(n_features, X, T, X, T, n_epochs=n_epochs,
+               hidden_act=TanhActivation(), output_act=LinearActivation(),
+               eta=eta, alfa=alpha, n_hidden=n_hidden, weight=0.7, lambd=lambd, n_trials=n_trials,
+               classification=classification, trainer=trainer, eps=eps,path_results=title_stat)
     # Dettaglio
     plt.subplot(2, 1, 1)
     plt.plot(mean_err_tr)

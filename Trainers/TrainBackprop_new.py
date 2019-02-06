@@ -22,6 +22,7 @@ class TrainBackprop2(Training):
         self.path_results = path_results
         self.norm_gradE = 0
         self.norm_gradE_0 = 0
+        self.hyperparameters = {}
 
     def train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=10 ^ (-3), threshold=0.5, suppress_print=False):
         assert X.shape[0] == T.shape[0]
@@ -29,6 +30,8 @@ class TrainBackprop2(Training):
         epoch = 0
         done_max_epochs = False  # Fatte numero massimo iterazioni
         found_optimum = False  # Gradiente minore o uguale a eps_prime
+
+        fieldnames = ['Iterazione', 'Eta', 'Errore', 'Gradiente']
 
         while (not done_max_epochs) and (not found_optimum):
             if epoch == 0:
@@ -52,8 +55,28 @@ class TrainBackprop2(Training):
                 self.norm_gradE = self.norm_gradE_0
 
                 mlp.gradients.append(self.norm_gradE / self.norm_gradE_0)
-                with open(self.path_results, "w") as f:
-                    f.write("#Iterazione,Iterazioni spese in Line Search,Eta,Errore,Gradiente\n")
+
+
+                self.hyperparameters = {
+                    'alpha': mlp.alfa,
+                    'eta': mlp.eta,
+                    'epsilon': eps,
+                    'epsilon_prime': self.epsilon_prime,
+                    'n_epochs': n_epochs
+                }
+
+                file_exists = os.path.isfile(self.path_results)
+                if not file_exists:
+                    with open(self.path_results, "w") as f:
+
+                        writer = csv.DictWriter(f, fieldnames=fieldnames)
+                        for key, item in self.hyperparameters.items():
+                            f.write("#%s:%s\n" % (key, item))
+
+                        writer.writeheader()
+                else:
+                    with open(self.path_results, "a") as f:
+                        f.write("\n\n")
 
             else:
                 self.w_new = get_current_point(mlp)
@@ -114,8 +137,11 @@ class TrainBackprop2(Training):
                                 epoch + 1, n_epochs, mlp.eta, self.norm_gradE / self.norm_gradE_0,
                                 E, error_MSE_val, error_MEE, error_MEE_val))
 
-                with open(self.path_results, "a") as f:
-                    f.write("%s,%s,%s,%s\n" % (epoch + 1, mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
+                with open(self.path_results, "a",newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writerow({'Iterazione':epoch+1,
+                                     'Eta':mlp.eta,'Errore':E,'Gradiente':self.norm_gradE / self.norm_gradE_0})
+
 
                 print("Iterazione %s) Eta = %s New Error %s New Gradient %s" % (
                     epoch, mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
@@ -166,4 +192,4 @@ class TrainBackprop2(Training):
         elif done_max_epochs:
             print("Terminato il numero massimo di iterazioni disponibili")
 
-        return len(mlp.errors_tr)
+        return len(mlp.errors_tr), 0, found_optimum, mlp.errors_tr[-1],self.hyperparameters

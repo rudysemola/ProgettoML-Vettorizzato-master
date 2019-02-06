@@ -1,10 +1,11 @@
 import sys
 
 sys.path.append("../")
+import os
 from Utilities.UtilityCM2 import *
 from Trainers.Training import *
 from Trainers.LineSearch_new import *
-
+import csv
 import numpy as np
 
 """
@@ -40,7 +41,7 @@ class TrainBackPropLS(Training):
         self.tau = tau
         self.sfgrd = sfgrd
         self.mina = mina
-        self.epsilon_prime = 0
+        self.eps_prime = 0
 
 
         self.it_AWLS_list = []
@@ -52,14 +53,22 @@ class TrainBackPropLS(Training):
 
         self.path_results = path_results
 
+        self.hyperparameters={}
+
+
+
     def train(self, mlp, X, T, X_val, T_val, n_epochs=1000, eps=1e-12, threshold=0.5, suppress_print=False):
 
         assert n_epochs > 0
         assert eps > 0
 
         epoch = 0
+        it_AWLS_train = 0
         done_max_epochs = False  # Fatte numero massimo iterazioni
         found_optimum = False  # Gradiente minore o uguale a eps_prime
+
+        fieldnames = ['Iterazione', 'Iterazioni spese in Line Search','Eta','Errore','Gradiente']
+
 
         while (not done_max_epochs) and (not found_optimum):
 
@@ -85,8 +94,34 @@ class TrainBackPropLS(Training):
                 self.norm_gradE = self.norm_gradE_0
 
                 mlp.gradients.append(self.norm_gradE / self.norm_gradE_0)
-                with open(self.path_results, "w") as f:
-                    f.write("#Iterazione,Iterazioni spese in Line Search,Eta,Errore,Gradiente\n")
+
+                self.hyperparameters={
+                'alpha' : mlp.alfa,
+                'eta_start': self.eta_start,
+                'eta_max': self.eta_max,
+                'max_iter': self.max_iter,
+                'm1': self.m1,
+                'm2': self.m2,
+                'tau': self.tau,
+                'sfgrd': self.sfgrd,
+                'mina': self.mina,
+                'epsilon': eps,
+                'epsilon_prime':self.eps_prime,
+                'n_epochs': n_epochs
+            }
+
+                file_exists = os.path.isfile(self.path_results)
+                if not file_exists:
+                    with open(self.path_results, "w") as f:
+
+                        writer = csv.DictWriter(f, fieldnames=fieldnames)
+                        for key,item in self.hyperparameters.items():
+                            f.write("#%s:%s\n"%(key,item))
+
+                        writer.writeheader()
+                else:
+                    with open(self.path_results, "a") as f:
+                        f.write("\n\n")
 
 
             else:
@@ -130,6 +165,8 @@ class TrainBackPropLS(Training):
                                         self.m2,
                                         self.tau, self.mina, self.sfgrd, l_bfgs=False, epsilon=self.eps_prime)
 
+
+                it_AWLS_train += it_AWLS
                 self.it_AWLS_list.append(it_AWLS)
 
                 # print("Epoca %s) Eta = %s"%(epoch+1,mlp.eta))
@@ -156,8 +193,10 @@ class TrainBackPropLS(Training):
                                 epoch + 1, n_epochs, mlp.eta, self.norm_gradE / self.norm_gradE_0,
                                 E, error_MSE_val, error_MEE, error_MEE_val))
 
-                with open(self.path_results, "a") as f:
-                    f.write("%s,%s,%s,%s,%s\n" % (epoch + 1, it_AWLS, mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
+                with open(self.path_results, "a",newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writerow({'Iterazione':epoch+1,'Iterazioni spese in Line Search':it_AWLS,
+                                     'Eta':mlp.eta,'Errore':E,'Gradiente':self.norm_gradE / self.norm_gradE_0})
 
                 print("Iterazione %s) Eta = %s New Error %s New Gradient %s" % (
                     epoch, mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
@@ -209,4 +248,6 @@ class TrainBackPropLS(Training):
         elif done_max_epochs:
             print("Terminato il numero massimo di iterazioni disponibili")
 
-        return len(mlp.errors_tr)
+        it_AWLS_train_avg = math.ceil(np.mean(self.it_AWLS_list))
+        print("Numero medio iterazioni in LS: ",it_AWLS_train_avg)
+        return len(mlp.errors_tr), it_AWLS_train_avg, found_optimum, mlp.errors_tr[-1],self.hyperparameters

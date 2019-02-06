@@ -14,7 +14,7 @@ import numpy as np
 from Utilities.UtilityCM2 import *
 from Utilities.Utility import *
 from Trainers.LineSearch_new import *
-
+import csv
 
 class LBFGS(Training):
 
@@ -73,6 +73,9 @@ class LBFGS(Training):
 
         self.path_results = path_results
 
+        self.hyperparameters = {}
+        self.fieldnames = ['Iterazione', 'Iterazioni spese in Line Search', 'Eta', 'Errore', 'Gradiente']
+
     """
     Esegue la prima iterazione del L-BFGS per inizializzare i vari elementi in modo corretto
     Nell'ordine, le azioni eseguite sono:
@@ -105,6 +108,8 @@ class LBFGS(Training):
     """
     def do_first_iteration(self,mlp,X,T,X_vl,T_vl,eps,threshold):
 
+
+
         #Calcolo la funzione nel punto iniziale
         self.w_prec = get_current_point(mlp)
 
@@ -119,6 +124,8 @@ class LBFGS(Training):
         self.gradE_prec = gradE
         self.norm_gradE_0 = np.linalg.norm(self.gradE_prec)
         self.epsilon_prime = eps * self.norm_gradE_0
+
+        self.hyperparameters['epsilon_prime'] = self.epsilon_prime
 
         """
         Calcolo errore validazione nel punto iniziale
@@ -189,11 +196,19 @@ class LBFGS(Training):
         mee_vl = compute_Regr_MEE(T_vl, mlp.Out_o)
         mlp.errors_mee_vl.append(mee_vl)
 
+        with open(self.path_results, "a", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+            writer.writerow({'Iterazione': 0, 'Iterazioni spese in Line Search': 0,
+                             'Eta': mlp.eta, 'Errore': E, 'Gradiente': 1})
+            writer.writerow({'Iterazione': 1, 'Iterazioni spese in Line Search': it_AWLS,
+                             'Eta': mlp.eta, 'Errore': E, 'Gradiente': self.norm_gradE / self.norm_gradE_0})
 
+        """
         with open(self.path_results,"w") as f:
             f.write("#Iterazione,Iterazioni spese in Line Search,Eta,Errore,Gradiente\n")
             f.write("0,0,-,%s,1\n"%(E))
             f.write("1,%s,%s,%s,%s\n"%(it_AWLS,mlp.eta,E_new,self.norm_gradE/self.norm_gradE_0))
+        """
 
         print("First Error ", E)
         print("New Error ",E_new)
@@ -286,6 +301,24 @@ class LBFGS(Training):
 
         epoch = 0
 
+        self.hyperparameters = {
+
+            'eta_start': self.eta_start,
+            'eta_max': self.eta_max,
+            'max_iter_AWLS_train': self.max_iter_AWLS_train,
+            'm1': self.m1,
+            'm2': self.m2,
+            'tau': self.tau,
+            'sfgrd': self.sfgrd,
+            'mina': self.mina,
+            'epsilon': eps,
+            'epsilon_prime': self.epsilon_prime,
+            'n_epochs': n_epochs,
+            'm': self.m,
+            'delta': self.delta
+
+        }
+
         done_max_epochs = False  # Fatte numero massimo iterazioni
         found_optimum = False  # Gradiente minore o uguale a eps_prime
         numerical_problems = False  # rho oppure gamma problem
@@ -295,7 +328,21 @@ class LBFGS(Training):
 
             if epoch == 0:
 
+                file_exists = os.path.isfile(self.path_results)
+                if not file_exists:
+                    with open(self.path_results, "w") as f:
+
+                        writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                        for key, item in self.hyperparameters.items():
+                            f.write("#%s:%s\n" % (key, item))
+
+                        writer.writeheader()
+                else:
+                    with open(self.path_results, "a") as f:
+                        f.write("\n\n")
+
                 converged = self.do_first_iteration(mlp,X,T,X_val,T_val,eps,threshold)
+
                 if converged:
                     found_optimum = True
 
@@ -347,9 +394,16 @@ class LBFGS(Training):
                 self.norm_gradE = np.linalg.norm(gradE)
                 print("Iterazione %s) Eta = %s New Error %s New Gradient %s"%(
                     epoch+1,mlp.eta,E,self.norm_gradE/self.norm_gradE_0))
+
+                """
                 with open(self.path_results, "a") as f:
                     f.write("%s,%s,%s,%s,%s\n" % (epoch+1,it_AWLS,mlp.eta, E, self.norm_gradE / self.norm_gradE_0))
+                """
 
+                with open(self.path_results, "a", newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                    writer.writerow({'Iterazione': epoch + 1, 'Iterazioni spese in Line Search': it_AWLS,
+                                     'Eta': mlp.eta, 'Errore': E, 'Gradiente': self.norm_gradE / self.norm_gradE_0})
 
                 """
                 Calcolo VL Error
@@ -394,4 +448,6 @@ class LBFGS(Training):
         elif done_max_AWLS_iters_train:
             print("Terminato per numero massimo di iterazioni totali di AWLS..")
 
-        return len(mlp.errors_tr)
+        it_AWLS_train_avg = math.ceil(np.mean(self.it_AWLS_list))
+        print("Numero medio iterazioni in LS: ", it_AWLS_train_avg)
+        return len(mlp.errors_tr), it_AWLS_train_avg, found_optimum, mlp.errors_tr[-1], self.hyperparameters

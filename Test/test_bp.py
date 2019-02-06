@@ -21,10 +21,10 @@ if __name__ == '__main__':
     n_hidden = 33
     lambd = 0.0075
     weight = 0.7
-    n_trials = 5
+    n_trials = 3
 
     "Iperparametri CM"
-    n_epochs = 10000
+    n_epochs = 1000
     eps = 1e-4
 
     "Criteri di arresto impiegati"
@@ -37,19 +37,23 @@ if __name__ == '__main__':
     T = P[:, -2:]
 
     "Per stampe salvandole su file"
+
     title = "../RisultatiCM/bp_"
     title = title + time.strftime("%d-%m-%Y-%H%M%S") + ".csv"
+
+    title_stat = "../RisultatiCM/bp_stat_"
+    title_stat = title_stat + time.strftime("%d-%m-%Y-%H%M%S") + ".csv"
+
 
     "Scelta e Inserimento iperparametri Algoritmo alla rete - Fase di progetto e prove sperimentali"
     trainer = TrainBackprop2(title)
 
     "traininig Alg. su numero di volte pari a n_trial"
-    best_mlp, mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, std_error_MEE_vl,\
-    avg_epochs_done = run_trials(n_features, X, T, X, T, n_epochs=n_epochs,
-                                 hidden_act=TanhActivation(), output_act=LinearActivation(),
-                                 eta=eta, alfa=alpha, n_hidden=n_hidden, weight=0.7, lambd=lambd, n_trials=n_trials,
-                                 classification=classification, trainer=trainer, eps=eps)
-
+    mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, \
+    std_error_MEE_vl = perform_test(n_features, X, T, X, T, n_epochs=n_epochs,
+                                    hidden_act=TanhActivation(), output_act=LinearActivation(),
+                                    eta=eta, alfa=alpha, n_hidden=n_hidden, weight=0.7, lambd=lambd, n_trials=n_trials,
+                                    classification=classification, trainer=trainer, eps=eps, path_results=title_stat)
     # Dettaglio
     plt.subplot(2, 1, 1)
     plt.plot(mean_err_tr)

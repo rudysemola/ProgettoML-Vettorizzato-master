@@ -1,7 +1,13 @@
-from Utilities.Utility import *
 import sys
 
 sys.path.append("../")
+
+from Utilities.Utility import *
+from Validation.GridSearch import *
+import csv
+import time
+
+
 """
 Trasforma 2 matrici in un unico vettore [X|Y]
 """
@@ -96,3 +102,123 @@ Restituisce il punto in cui si trovano i pesi di mlp
 def get_current_point(mlp):
     w = matrix2vec(mlp.W_h, mlp.W_o)
     return w
+
+
+
+"""
+Serve per fare le prove per CM
+"""
+def perform_test(n_features, X, T, X_val, T_val, n_epochs,
+                                 hidden_act, output_act,
+                                 eta, alfa, n_hidden, weight, lambd, n_trials,
+                                 classification, trainer, eps,
+                                 path_results
+                                 ):
+
+    fieldnames_trial = ['Trial','Iterazioni Totali', 'Iterazioni spese in Line Search', 'Trovato ottimo' ,'Ottimo']
+
+    avg_epochs_done = 0 #Numero medio di epoche fatte
+    avg_it_AWLS_done = 0 #Numero medio di AWLS fatte
+    n_converged = 0 #Numero di trial che hanno raggiunto l'ottimo
+    time_tot  = 0 #Tempo totale in cui sono stati eseguiti tutti i trials
+
+    errors_tr = np.zeros((n_trials, n_epochs + 1))
+    errors_vl = np.zeros((n_trials, n_epochs + 1))
+
+    if classification:
+        acc_tr = np.zeros((n_trials, n_epochs+1))
+        acc_vl = np.zeros((n_trials, n_epochs+1))
+    else:
+        errors_MEE_tr = np.zeros((n_trials, n_epochs+1))
+        errors_MEE_vl = np.zeros((n_trials, n_epochs+1))
+
+    start = time.time()
+
+
+    for trial in range(n_trials):
+
+        mlp = MLP(n_features, n_hidden, T.shape[1], hidden_act, output_act, eta=eta, alfa=alfa, lambd=lambd,
+                  fan_in_h=True, range_start_h=-weight, range_end_h=weight,
+                  classification=classification, trainer=trainer)
+
+        epoch_done,ls_iters,converged,optimum, hyperparam = mlp.trainer.train(mlp, addBias(X), T, addBias(X_val), T_val, n_epochs, eps,
+                                       suppress_print=True)
+
+        avg_epochs_done += epoch_done
+        avg_it_AWLS_done += ls_iters
+        if converged:
+            n_converged += 1
+
+        #Salvo le info x ogni trial su file csv
+
+        if trial == 0:
+            with open(path_results,"w") as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames_trial)
+                    for key, item in hyperparam.items():
+                        f.write("#%s:%s\n" % (key, item))
+                    writer.writeheader()
+
+        with open(path_results, "a", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames_trial)
+            writer.writerow({'Trial':trial+1,'Iterazioni Totali': epoch_done, 'Iterazioni spese in Line Search': ls_iters,
+                             'Trovato ottimo': converged, 'Ottimo': optimum})
+
+        errors_tr[trial, :epoch_done] = mlp.errors_tr
+        errors_vl[trial, :epoch_done] = mlp.errors_vl
+        errors_tr[trial, epoch_done:] = mlp.errors_tr[-1]
+        errors_vl[trial, epoch_done:] = mlp.errors_vl[-1]
+
+        if classification:
+            acc_tr[trial,epoch_done:] = mlp.accuracies_tr[-1]
+            acc_vl[trial,epoch_done:] = mlp.accuracies_vl[-1]
+            acc_tr[trial, :epoch_done] = mlp.accuracies_tr
+            acc_vl[trial, :epoch_done] = mlp.accuracies_vl
+        else:
+            errors_MEE_tr[trial, :epoch_done] = mlp.errors_mee_tr
+            errors_MEE_vl[trial, :epoch_done] = mlp.errors_mee_vl
+            errors_MEE_tr[trial,epoch_done:] = mlp.errors_mee_tr[-1]
+            errors_MEE_vl[trial,epoch_done:] = mlp.errors_mee_vl[-1]
+
+
+    mean_err_tr = np.mean(errors_tr, axis=0, keepdims=True).T  # Media
+    std_err_tr = np.std(errors_tr, axis=0, keepdims=True).T  # sqm (radice varianza)
+    mean_err_vl = np.mean(errors_vl, axis=0, keepdims=True).T  # Media
+    std_err_vl = np.std(errors_vl, axis=0, keepdims=True).T  # sqm (radice varianza)
+
+    if classification:
+        mean_acc_tr = np.mean(acc_tr, axis=0, keepdims=True).T  # Media
+        std_acc_tr = np.std(acc_tr, axis=0, keepdims=True).T  # sqm (radice varianza)
+        mean_acc_vl = np.mean(acc_vl, axis=0, keepdims=True).T  # Media
+        std_acc_vl = np.std(acc_vl, axis=0, keepdims=True).T  # sqm (radice varianza)
+    else:
+        mean_error_MEE_tr = np.mean(errors_MEE_tr, axis=0, keepdims=True).T  # Media
+        std_error_MEE_tr = np.std(errors_MEE_tr, axis=0, keepdims=True).T  # sqm (radice varianza)
+        mean_error_MEE_vl = np.mean(errors_MEE_vl, axis=0, keepdims=True).T  # Media
+        std_error_MEE_vl = np.std(errors_MEE_vl, axis=0, keepdims=True).T  # sqm (radice varianza)
+
+    with open(path_results, "a", newline='') as f:
+        f.write("\n\n\t\t\t\t\tRISULTATI COMPLESSIVI")
+
+
+    end = time.time()
+    time_tot = end - start
+
+    avg_epochs_done = math.ceil(avg_epochs_done /n_trials)
+    avg_it_AWLS_done = math.ceil(avg_it_AWLS_done/n_trials)
+
+    fieldnames_total = ['Trials totali','Iterazioni medie','# Iterazioni LS medie', '# Trials Converged', 'MSE medio',
+                        'Std MSE', 'Tempo totale']
+
+    with open(path_results, "a", newline='') as f:
+        f.write("\n")
+        writer = csv.DictWriter(f, fieldnames=fieldnames_total)
+        writer.writeheader()
+        writer.writerow(
+            {'Trials totali': n_trials, 'Iterazioni medie': avg_epochs_done, '# Iterazioni LS medie': avg_it_AWLS_done,
+             '# Trials Converged': n_converged, 'MSE medio': float(mean_err_tr[-1]), 'Std MSE': float(std_err_tr[-1]),
+             'Tempo totale':time_tot})
+
+    if classification:
+        return mean_err_tr, std_err_tr, mean_acc_tr, std_acc_tr, mean_err_vl, std_err_vl, mean_acc_vl, std_acc_vl
+    else:
+        return mean_err_tr, std_err_tr, mean_error_MEE_tr, std_error_MEE_tr, mean_err_vl, std_err_vl, mean_error_MEE_vl, std_error_MEE_vl
